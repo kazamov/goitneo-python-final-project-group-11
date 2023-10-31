@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from pickle import dump, load
 
+from .note_book import NoteBook
 from .contact_book import ContactBook
 
 
@@ -11,6 +12,11 @@ class Assistant(ABC):
     @property
     @abstractmethod
     def contact_book(self) -> ContactBook:
+        pass
+
+    @property
+    @abstractmethod
+    def note_book(self) -> NoteBook:
         pass
 
     @abstractmethod
@@ -25,10 +31,15 @@ class Assistant(ABC):
 class Neoassistant(Assistant):
     def __init__(self):
         self.__contact_book = ContactBook()
+        self.__note_book = NoteBook()
 
     @property
     def contact_book(self) -> ContactBook:
         return self.__contact_book
+
+    @property
+    def note_book(self) -> NoteBook:
+        return self.__note_book
 
     def save(self, filename):
         cache_folder_path = Path.joinpath(Path.cwd(), "cache")
@@ -43,3 +54,4 @@ class Neoassistant(Assistant):
             with open(path, "rb") as file:
                 content = load(file)
                 self.__contact_book = content.contact_book
+                self.__note_book = content.note_book
