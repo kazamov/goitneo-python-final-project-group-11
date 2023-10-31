@@ -1,5 +1,6 @@
 from datetime import datetime
 from abc import ABC
+import re
 
 from .errors import InvalidValueFieldError
 
@@ -75,3 +76,26 @@ class Birthday(Field):
 
     def __str__(self):
         return self.value.strftime("%d.%m.%Y")
+
+
+class Email(Field):
+    """Class for email field"""
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value: str):
+        if not self.is_valid_email(value):
+            raise InvalidValueFieldError(
+                "email", value, "Invalid email format."
+            )
+
+        self.__value = value
+
+    @staticmethod
+    def is_valid_email(email):
+        # Use a regular expression to validate email format
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        return re.match(email_pattern, email) is not None

@@ -398,6 +398,95 @@ class HelpCommand(Command):
 
         return "\n".join(str(c) for c in COMMANDS)
 
+class AddEmailCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "add-email",
+            "Add an email address to a contact. Format: add-email <name> <email>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 2:
+            raise InvalidCommandError(self.name, "Name and email are required.")
+
+        name, email = args
+
+        record = assistant.contact_book.find(name)
+        if record:
+            record.add_email(email)
+            return "Email added."
+        else:
+            return "Contact is not found."
+
+
+class ChangeEmailCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "change-email",
+            "Change an email address of a contact. Format: change-email <name> <email>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 2:
+            raise InvalidCommandError(self.name, "Name and email are required.")
+
+        name, email = args
+
+        record = assistant.contact_book.find(name)
+        if record:
+            record.change_email(email)
+            return "Email updated."
+        else:
+            return "Contact is not found."
+
+
+class DeleteEmailCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "delete-email",
+            "Delete the email address of a contact. Format: delete-email <name>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Name is required.")
+
+        name = args[0]
+
+        record = assistant.contact_book.find(name)
+        if record:
+            record.delete_email()
+            return "Email deleted."
+        else:
+            return "Contact is not found."
+
+
+class ShowEmailCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "show-email",
+            "Show the email address of a contact. Format: show-email <name>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Name is required.")
+
+        name = args[0]
+
+        record = assistant.contact_book.find(name)
+        if record:
+            email = record.show_email()
+            if email is not None:
+                return f"Email: {email}"
+            else:
+                return "No email address associated with this contact."
+        else:
+            return "Contact is not found."
 
 COMMANDS = [
     HelloCommand(),
@@ -418,6 +507,10 @@ COMMANDS = [
     SearchNotesCommand(),
     ExitCommand(),
     HelpCommand(),
+    AddEmailCommand(),
+    ChangeEmailCommand(),
+    DeleteEmailCommand(),
+    ShowEmailCommand(),
 ]
 
 COMMANDS_MAP = {(c.name, c.alias): c for c in COMMANDS}

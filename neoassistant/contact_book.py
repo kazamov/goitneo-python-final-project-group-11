@@ -1,22 +1,28 @@
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
 
-from .fields import Name, Phone, Birthday
+from .fields import Name, Phone, Birthday, Email
 
 
 class Contact:
     """Class for contact"""
 
-    def __init__(self, name):
+    def __init__(self, name, email=None):
         self.name = Name(name)
         self.birthday = None
         self.phones: list[Phone] = []
+        self.email = None  # Initialize the email field if provided
+        if email:
+            self.add_email(email)
 
     def __str__(self):
         result = f"Contact name: {self.name.value}, phones: {', '.join(p.value for p in self.phones)}"
 
         if self.birthday:
             result += f", birthday: {str(self.birthday)}"
+
+        if self.email:  # Add email to the string representation
+            result += f", email: {self.email.value}"
 
         return result
 
@@ -43,6 +49,21 @@ class Contact:
 
     def add_birthday(self, birthday: str):
         self.birthday = Birthday(birthday)
+
+    def add_email(self, email: str):
+        self.email = Email(email)
+
+    def change_email(self, new_email: str):
+        if self.email:
+            self.email.value = new_email
+        else:
+            self.add_email(new_email)
+
+    def delete_email(self):
+        self.email = None
+
+    def show_email(self):
+        return self.email.value if self.email else None
 
 
 class ContactBook(UserDict):
