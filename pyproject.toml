@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=65.5.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neoassistant"
+version = "0.1.0"
+description = "A CLI application that helps to manage contacts and notes."
+readme = "README.md"
+authors = [
+    { name = "Illja", email = "a4grtu@gmail.com" },
+    { name = "Olha Levchenko", email = "olgakazakovskaya@ukr.net" },
+    { name = "Vladyslav Mazur", email = "vladopermoz@gmail.com" }
+    { name = "Zakir Nuriiev", email = "kazamov@gmail.com" },
+]
+license = { file = "LICENSE" }
+keywords = ["assistant", "contacts", "notes"]
+dependencies = [
+    "rich"
+],
+requires-python = ">=3.11",
+
+[project.optional-dependencies]
+dev = ["black", "pylint", "isort", "pytest"]
+
+[project.urls]
+Homepage = "https://github.com/kazamov/goitneo-python-final-project-group-11/"
+
+[project.scripts]
+neoassistant = "neoassistant.__main__:main"
