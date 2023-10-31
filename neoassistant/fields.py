@@ -5,6 +5,8 @@ from .errors import InvalidValueFieldError
 
 
 class Field(ABC):
+    """Abstract class for fields"""
+
     __value = None
 
     def __init__(self, value: str):
@@ -23,6 +25,8 @@ class Field(ABC):
 
 
 class Name(Field):
+    """Class for name field"""
+
     @property
     def value(self):
         return self.__value
@@ -35,6 +39,8 @@ class Name(Field):
 
 
 class Phone(Field):
+    """Class for phone field"""
+
     @property
     def value(self):
         return self.__value
@@ -50,6 +56,8 @@ class Phone(Field):
 
 
 class Birthday(Field):
+    """Class for birthday field"""
+
     @property
     def value(self):
         return self.__value
@@ -58,10 +66,10 @@ class Birthday(Field):
     def value(self, value: str):
         try:
             parsed_date = datetime.strptime(value, "%d.%m.%Y").date()
-        except ValueError:
+        except ValueError as exc:
             raise InvalidValueFieldError(
                 "birthday", value, "Birthday should be in format DD.MM.YYYY."
-            )
+            ) from exc
         else:
             self.__value = parsed_date
 

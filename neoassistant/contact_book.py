@@ -7,6 +7,8 @@ from .fields import Name, Phone, Birthday
 
 
 class Contact:
+    """Class for contact"""
+
     def __init__(self, name):
         self.name = Name(name)
         self.birthday = None
@@ -46,6 +48,8 @@ class Contact:
 
 
 class ContactBook(UserDict):
+    """Class for contact book"""
+
     def __str__(self) -> str:
         return "\n".join(str(record) for record in self.data.values())
 

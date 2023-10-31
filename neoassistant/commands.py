@@ -5,6 +5,8 @@ from .errors import InvalidCommandError, InvalidValueFieldError
 
 
 def input_error(func):
+    """Decorator for input errors"""
+
     def inner(self, address_book: ContactBook, args):
         try:
             return func(self, address_book, args)
@@ -18,6 +20,8 @@ def input_error(func):
 
 
 class Command(ABC):
+    """Abstract class for commands"""
+
     def __init__(
         self, name: str, description: str, alias: str = None, is_final: bool = False
     ):
