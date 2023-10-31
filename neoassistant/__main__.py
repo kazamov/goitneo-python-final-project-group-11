@@ -1,4 +1,4 @@
-from .assiatant import Neoassistant
+from .assistant import Neoassistant
 from .commands import get_command
 
 

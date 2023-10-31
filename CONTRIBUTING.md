@@ -15,7 +15,7 @@
 
 ## Debug project
 
-To debug a project there is a launch configuration for the VS Code named "Python: Neoversity". Set a breack point in the entrypoint file or in any other file and run the debug using the interface button or press F5 (on Windows).
+To debug a project there is a launch configuration for the VS Code named "Python: Neoversity". Set a break point in the entrypoint file or in any other file and run the debug using the interface button or press F5 (on Windows).
 
 ## Submitting a PR
 

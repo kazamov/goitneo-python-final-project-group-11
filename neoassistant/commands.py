@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from .assiatant import Assistant
+from .assistant import Assistant
 
 from .contact_book import ContactBook, Contact
 from .errors import InvalidCommandError, InvalidValueFieldError
