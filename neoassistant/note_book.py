@@ -2,16 +2,12 @@ from collections import UserDict
 
 
 class Note:
-    def __init__(self, title: str, content: str, tags: list[str] = None):
+    def __init__(self, title: str, content: str):
         self.title = title
         self.content = content
-        if tags is None:
-            self.tags = []
-        else:
-            self.tags = tags
 
     def __str__(self):
-        return f"Title: {self.title}\nContent: {self.content}\nTags: {', '.join(self.tags)}"
+        return f"Title: {self.title}\nContent: {self.content}\n"
 
 
 class NoteBook(UserDict):
@@ -28,18 +24,18 @@ class NoteBook(UserDict):
         if title in self.data:
             self.data.pop(title)
 
-    def edit(self, title: str, new_title: str, new_content: str, new_tags: list[str]):
+    def change(self, title: str, new_title: str, new_content: str):
         note = self.find(title)
         if note:
             note.title = new_title
             note.content = new_content
-            note.tags = new_tags
             self.data[new_title] = note
             self.data.pop(title)
 
-    def search(self, tag: str) -> list[Note]:
-        notes = []
-        for note in self.data.values():
-            if tag in note.tags:
-                notes.append(note)
-        return notes
+    def search(self, criteria: str) -> list[Note]:
+        return list(
+            filter(
+                lambda note: criteria in note.title or criteria in note.content,
+                self.data.values(),
+            )
+        )

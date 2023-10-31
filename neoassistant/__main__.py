@@ -1,3 +1,6 @@
+from argparse import ArgumentParser
+from shlex import split
+
 from .assistant import Neoassistant
 from .commands import get_command
 
@@ -7,7 +10,7 @@ NEOASSISTANT_DATA_FILENAME = "neoassistant-data.bin"
 
 def parse_input(user_input):
     """Parse input string and return command name and arguments"""
-    cmd, *args = user_input.split()
+    cmd, *args = split(user_input)
     cmd = cmd.strip().lower()
     return cmd, *args
 

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
+from .note_book import Note
 from .assistant import Assistant
-
 from .contact_book import ContactBook, Contact
 from .errors import InvalidCommandError, InvalidValueFieldError
 
@@ -247,6 +247,131 @@ class ShowBirthdaysCommand(Command):
         return assistant.contact_book.get_birthdays_per_week()
 
 
+class AddNoteCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "add-note",
+            "Add a new note. Format: add-note <title> <content> [tags]",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) < 2:
+            raise InvalidCommandError(self.name, "Title and content are required.")
+
+        title, content = args
+
+        note = assistant.note_book.find(title)
+        if note:
+            return f"Note with title '{title}' already exists."
+
+        note = Note(title, content)
+        assistant.note_book.add_record(note)
+
+        return "Note added."
+
+
+class ChangeNoteCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "change-note",
+            "Change a note. Format: change-note <title> <new_title> <new_content>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) < 3:
+            raise InvalidCommandError(
+                self.name, "Title, new title and new content are required."
+            )
+
+        title, new_title, new_content = args
+
+        note = assistant.note_book.find(title)
+        if not note:
+            return f"Note with title '{title}' is not found."
+
+        assistant.note_book.change(title, new_title, new_content)
+
+        return "Note updated."
+
+
+class DeleteNoteCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "delete-note",
+            "Delete a note. Format: delete-note <title>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Title is required.")
+
+        title = args[0]
+
+        note = assistant.note_book.find(title)
+        if not note:
+            return f"Note with title '{title}' is not found."
+
+        assistant.note_book.delete(title)
+
+        return "Note deleted."
+
+
+class ShowNoteCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "show-note",
+            "Show a note. Format: show-note <title>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Title is required.")
+
+        title = args[0]
+
+        note = assistant.note_book.find(title)
+        if not note:
+            return f"Note with title '{title}' is not found."
+
+        return str(note)
+
+
+class ShowAllNotesCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "all-notes",
+            "Show all notes.",
+        )
+
+    def execute(self, assistant: Assistant, _):
+        return str(assistant.note_book)
+
+
+class SearchNotesCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "search-notes",
+            "Search notes by criteria. Format: search-notes <criteria>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Search criteria is required.")
+
+        criteria = args[0]
+
+        notes = assistant.note_book.search(criteria)
+        if len(notes) == 0:
+            return f"Notes with criteria '{criteria}' are not found."
+
+        return "\n".join(str(note) for note in notes)
+
+
 class ExitCommand(Command):
     def __init__(self):
         super().__init__("exit", "Exit the program.", alias="close", is_final=True)
@@ -285,6 +410,12 @@ COMMANDS = [
     ChangeBirthdayCommand(),
     ShowBirthdayCommand(),
     ShowBirthdaysCommand(),
+    AddNoteCommand(),
+    ChangeNoteCommand(),
+    DeleteNoteCommand(),
+    ShowNoteCommand(),
+    ShowAllNotesCommand(),
+    SearchNotesCommand(),
     ExitCommand(),
     HelpCommand(),
 ]
