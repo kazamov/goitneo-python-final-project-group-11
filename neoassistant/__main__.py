@@ -2,7 +2,7 @@ from .contact_book import ContactBook
 from .commands import get_command
 
 
-CONTACT_BOOK_FILENAME = "address_book.pickle"
+CONTACT_BOOK_FILENAME = "address_book.bin"
 
 
 def parse_input(user_input):

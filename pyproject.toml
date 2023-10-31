@@ -10,15 +10,13 @@ readme = "README.md"
 authors = [
     { name = "Illja", email = "a4grtu@gmail.com" },
     { name = "Olha Levchenko", email = "olgakazakovskaya@ukr.net" },
-    { name = "Vladyslav Mazur", email = "vladopermoz@gmail.com" }
-    { name = "Zakir Nuriiev", email = "kazamov@gmail.com" },
+    { name = "Vladyslav Mazur", email = "vladopermoz@gmail.com" },
+    { name = "Zakir Nuriiev", email = "kazamov@gmail.com" }
 ]
 license = { file = "LICENSE" }
 keywords = ["assistant", "contacts", "notes"]
-dependencies = [
-    "rich"
-],
-requires-python = ">=3.11",
+dependencies = ["rich"]
+requires-python = ">=3.11"
 
 [project.optional-dependencies]
 dev = ["black", "pylint", "isort", "pytest"]
