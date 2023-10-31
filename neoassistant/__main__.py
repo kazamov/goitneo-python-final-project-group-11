@@ -1,21 +1,22 @@
-from .contact_book import ContactBook
+from .assiatant import Neoassistant
 from .commands import get_command
 
 
-CONTACT_BOOK_FILENAME = "address_book.bin"
+NEOASSISTANT_DATA_FILENAME = "neoassistant-data.bin"
 
 
 def parse_input(user_input):
+    """Parse input string and return command name and arguments"""
     cmd, *args = user_input.split()
     cmd = cmd.strip().lower()
     return cmd, *args
 
 
 def main():
-    contact_book = ContactBook()
-    contact_book.load(CONTACT_BOOK_FILENAME)
+    neoassistant = Neoassistant()
+    neoassistant.load(NEOASSISTANT_DATA_FILENAME)
 
-    print("Welcome to the assistant bot!")
+    print("Welcome to the neoassistant bot!")
     while True:
         user_input = input("Enter a command: ")
         command_name, *args = parse_input(user_input)
@@ -23,10 +24,10 @@ def main():
         command_object = get_command(command_name)
 
         if command_object:
-            print(f"\n{command_object.execute(contact_book, args)}\n")
+            print(f"\n{command_object.execute(neoassistant, args)}\n")
 
             if command_object.is_final:
-                contact_book.save(CONTACT_BOOK_FILENAME)
+                neoassistant.save(NEOASSISTANT_DATA_FILENAME)
                 break
         else:
             print("Unknown command.")

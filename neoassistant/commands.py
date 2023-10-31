@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from .assiatant import Assistant
+
 from .contact_book import ContactBook, Contact
 from .errors import InvalidCommandError, InvalidValueFieldError
 
@@ -34,7 +36,7 @@ class Command(ABC):
         return f"{self.name} - {self.description}"
 
     @abstractmethod
-    def execute(self, address_book: ContactBook, args):
+    def execute(self, assistant: Assistant, args):
         pass
 
 
@@ -54,7 +56,7 @@ class AddContactCommand(Command):
         )
 
     @input_error
-    def execute(self, address_book: ContactBook, args):
+    def execute(self, assistant: Assistant, args):
         if len(args) < 2:
             raise InvalidCommandError(self.name, "Name and phone are required.")
 
@@ -67,7 +69,7 @@ class AddContactCommand(Command):
         except ValueError:
             name, phone = args
 
-        record = address_book.find(name)
+        record = assistant.contact_book.find(name)
         if record:
             record.add_phone(phone)
             if birthday:
@@ -80,7 +82,7 @@ class AddContactCommand(Command):
         if birthday:
             record.add_birthday(birthday)
 
-        address_book.add_record(record)
+        assistant.contact_book.add_record(record)
 
         return "Contact added."
 
@@ -93,7 +95,7 @@ class ChangeContactCommand(Command):
         )
 
     @input_error
-    def execute(self, address_book: ContactBook, args):
+    def execute(self, assistant: Assistant, args):
         if len(args) < 3:
             raise InvalidCommandError(
                 self.name, "Name, previous phone and new phone are required."
@@ -109,7 +111,7 @@ class ChangeContactCommand(Command):
         except ValueError:
             name, prev_phone, new_phone = args
 
-        record = address_book.find(name)
+        record = assistant.contact_book.find(name)
         if record:
             record.edit_phone(prev_phone, new_phone)
 
@@ -129,13 +131,13 @@ class DeleteContactCommand(Command):
         )
 
     @input_error
-    def execute(self, address_book: ContactBook, args):
+    def execute(self, assistant: Assistant, args):
         if len(args) != 2:
             raise InvalidCommandError(self.name, "Name and phone are required.")
 
         name, phone = args
 
-        record = address_book.find(name)
+        record = assistant.contact_book.find(name)
         if record:
             record.delete_phone(phone)
             return "Contact updated."
@@ -151,13 +153,13 @@ class ShowContactCommand(Command):
         )
 
     @input_error
-    def execute(self, address_book: ContactBook, args):
+    def execute(self, assistant: Assistant, args):
         if len(args) != 1:
             raise InvalidCommandError(self.name, "Name is required.")
 
         name = args[0]
 
-        record = address_book.find(name)
+        record = assistant.contact_book.find(name)
         if record:
             return str(record)
         else:
@@ -168,8 +170,8 @@ class ShowAllContactsCommand(Command):
     def __init__(self):
         super().__init__("all", "Show all contacts.")
 
-    def execute(self, address_book: ContactBook, _):
-        return str(address_book)
+    def execute(self, assistant: Assistant, _):
+        return str(assistant.contact_book)
 
 
 class AddBirthdayCommand(Command):
@@ -180,13 +182,13 @@ class AddBirthdayCommand(Command):
         )
 
     @input_error
-    def execute(self, address_book: ContactBook, args):
+    def execute(self, assistant: Assistant, args):
         if len(args) != 2:
             raise InvalidCommandError(self.name, "Name and birthday are required.")
 
         name, birthday = args
 
-        record = address_book.find(name)
+        record = assistant.contact_book.find(name)
         if record:
             record.add_birthday(birthday)
             return "Birthday added."
@@ -202,13 +204,13 @@ class ChangeBirthdayCommand(Command):
         )
 
     @input_error
-    def execute(self, address_book: ContactBook, args):
+    def execute(self, assistant: Assistant, args):
         if len(args) != 2:
             raise InvalidCommandError(self.name, "Name and birthday are required.")
 
         name, birthday = args
 
-        record = address_book.find(name)
+        record = assistant.contact_book.find(name)
         if record:
             record.add_birthday(birthday)
             return "Birthday updated."
@@ -224,13 +226,13 @@ class ShowBirthdayCommand(Command):
         )
 
     @input_error
-    def execute(self, address_book: ContactBook, args):
+    def execute(self, assistant: Assistant, args):
         if len(args) != 1:
             raise InvalidCommandError(self.name, "Name is required.")
 
         name = args[0]
 
-        record = address_book.find(name)
+        record = assistant.contact_book.find(name)
         if record:
             return str(record.birthday)
         else:
@@ -241,8 +243,8 @@ class ShowBirthdaysCommand(Command):
     def __init__(self):
         super().__init__("show-birthdays", "Show all birthdays per next 7 days.")
 
-    def execute(self, address_book: ContactBook, _):
-        return address_book.get_birthdays_per_week()
+    def execute(self, assistant: Assistant, _):
+        return assistant.contact_book.get_birthdays_per_week()
 
 
 class ExitCommand(Command):

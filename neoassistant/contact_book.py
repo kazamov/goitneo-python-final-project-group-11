@@ -1,7 +1,5 @@
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
-from pathlib import Path
-from pickle import dump, load
 
 from .fields import Name, Phone, Birthday
 
@@ -105,17 +103,3 @@ class ContactBook(UserDict):
             result += f"{day.strftime('%A')}: {', '.join(birthdays_list[day])}\n"
 
         return result
-
-    def save(self, filename):
-        cache_folder_path = Path.joinpath(Path.cwd(), "cache")
-        cache_folder_path.mkdir(exist_ok=True)
-        file_path = Path.joinpath(cache_folder_path, filename)
-        with open(file_path, "wb") as file:
-            dump(self, file)
-
-    def load(self, filename):
-        path = Path.joinpath(Path.cwd(), "cache", filename)
-        if path.exists():
-            with open(path, "rb") as file:
-                content = load(file)
-                self.data = content.data
