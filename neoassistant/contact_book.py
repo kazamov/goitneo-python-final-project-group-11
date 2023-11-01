@@ -1,7 +1,7 @@
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
 
-from .fields import Name, Phone, Birthday, Email
+from .fields import Name, Phone, Birthday, Email, Address
 
 
 class Contact:
@@ -9,8 +9,9 @@ class Contact:
 
     def __init__(self, name, email=None):
         self.name = Name(name)
-        self.birthday = None
+        self.birthday: Birthday = None
         self.phones: list[Phone] = []
+        self.address: Address = None
         self.email = None  # Initialize the email field if provided
         if email:
             self.add_email(email)
@@ -20,7 +21,10 @@ class Contact:
 
         if self.birthday:
             result += f", birthday: {str(self.birthday)}"
-
+        
+        if self.address:
+            result += f", address: {str(self.address)}"
+            
         if self.email:  # Add email to the string representation
             result += f", email: {self.email.value}"
 
@@ -65,11 +69,23 @@ class Contact:
     def show_email(self):
         return self.email.value if self.email else None
 
+    def add_address(self, address: str):
+        self.address = Address(address)
+
+    def delete_address(self):
+        self.address = None
+
+    def show_address(self) -> Address:
+        return self.address
+
 
 class ContactBook(UserDict):
     """Class for contact book"""
 
     def __str__(self) -> str:
+        if len(self.data) == 0:
+            return "Contact book is empty."
+
         return "\n".join(str(record) for record in self.data.values())
 
     def add_record(self, record: Contact):
@@ -82,7 +98,7 @@ class ContactBook(UserDict):
         if name in self.data:
             self.data.pop(name)
 
-    def get_birthdays_per_week(self):
+    def get_birthdays_per_week(self, days_delta = 7):
         user_records = self.data.values()
 
         if len(user_records) == 0:
@@ -105,22 +121,25 @@ class ContactBook(UserDict):
                     year=current_date.year + 1
                 )
 
-            if birthday_this_year.weekday() == 5:
-                birthday_this_year += timedelta(days=2)
-            elif birthday_this_year.weekday() == 6:
-                birthday_this_year += timedelta(days=1)
-
             delta_days = (birthday_this_year - current_date).days
-            if delta_days > 0 and delta_days <= 7:
+            if delta_days > 0 and delta_days <= days_delta:
                 birthdays_list[birthday_this_year].append(name)
 
         if len(birthdays_list) == 0:
-            return "No birthdays near 7 days."
+            return f"No birthdays near {days_delta} days."
 
         sorted_birthdays_list = sorted(birthdays_list.keys())
 
-        result = ""
+        result = f"Birthdays for the next {days_delta} days:\n"
         for day in sorted_birthdays_list:
-            result += f"{day.strftime('%A')}: {', '.join(birthdays_list[day])}\n"
+            result += f"{day.strftime('%d.%m.%Y')} - {', '.join(birthdays_list[day])}\n"
 
         return result
+
+    def filter(self, search_criteria: str) -> list[Contact]:
+        return list(
+            filter(
+                lambda contact: str(contact).find(search_criteria) > 0,
+                self.data.values(),
+            )
+        )
