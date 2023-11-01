@@ -247,15 +247,18 @@ class ShowBirthdaysCommand(Command):
             + "Format: show-birthdays <days> (default 7)",
         )
 
+    @input_error
     def execute(self, assistant: Assistant, args):
         try:
             days_delta = int(args[0])
             if days_delta > 365:
-                return "The maximum value for days is 365."
+                raise InvalidCommandError(
+                    self.name, "The maximum value for days_delta is 365."
+                )
         except IndexError:
             days_delta = 7
         except ValueError:
-            return "Invalid numbers of days"
+            raise InvalidCommandError(self.name, "Invalid numbers of days.")
         return assistant.contact_book.get_birthdays_per_week(days_delta)
 
 
