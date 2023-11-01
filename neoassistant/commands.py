@@ -348,6 +348,24 @@ class DeleteAddressCommand(Command):
             return "Contact is not found."
 
 
+class FilterCommand(Command):
+    def __init__(self):
+        super().__init__("filter", "Filter contacts by search criteria. Format: filter <search_criteria>")
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Search criteria is required.")
+
+        criteria = args[0]
+
+        contacts = assistant.contact_book.filter(criteria)
+        if len(contacts) == 0:
+            return f"Contacts that satisfy search criteria '{criteria}' are not found."
+        
+        return "\n".join(str(contact) for contact in contacts)
+
+
 class AddNoteCommand(Command):
     def __init__(self):
         super().__init__(
@@ -587,6 +605,7 @@ COMMANDS = [
     ChangeAddressCommand(),
     ShowAddressCommand(),
     DeleteAddressCommand(),
+    FilterCommand(),
     AddNoteCommand(),
     ChangeNoteCommand(),
     DeleteNoteCommand(),

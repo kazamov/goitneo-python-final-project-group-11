@@ -114,3 +114,11 @@ class ContactBook(UserDict):
             result += f"{day.strftime('%d.%m.%Y')} - {', '.join(birthdays_list[day])}\n"
 
         return result
+
+    def filter(self, search_criteria: str) -> list[Contact]:
+        return list(
+            filter(
+                lambda contact: str(contact).find(search_criteria) > 0,
+                self.data.values(),
+            )
+        )
