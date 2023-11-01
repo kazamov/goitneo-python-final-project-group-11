@@ -1,5 +1,5 @@
 from collections import UserDict, defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from .fields import Name, Phone, Birthday, Email, Address
 
