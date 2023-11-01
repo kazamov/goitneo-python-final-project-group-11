@@ -41,49 +41,66 @@ class Command(ABC):
         pass
 
 
-class HelloCommand(Command):
-    def __init__(self):
-        super().__init__("hello", "Show greeting message.")
-
-    def execute(self, *_):
-        return "How can I help you?"
-
-
 class AddContactCommand(Command):
     def __init__(self):
         super().__init__(
             "add",
-            "Add a new contact. Format: add <name> <phone> [birthday]",
+            "Add a new contact. Format: add --name <name> --phones [phone] --birthday [birthday] --address [address] --email [email]",
+        )
+        self.parser = ArgumentParser()
+        self.parser.add_argument("-n", "--name", type=str, required=True)
+        self.parser.add_argument(
+            "-p",
+            "--phones",
+            action="extend",
+            nargs="+",
+            type=str,
+            required=False,
+            default=[],
+        )
+        self.parser.add_argument(
+            "-b", "--birthday", type=str, required=False, default=None
+        )
+        self.parser.add_argument(
+            "-a", "--address", type=str, required=False, default=None
+        )
+        self.parser.add_argument(
+            "-e", "--email", type=str, required=False, default=None
         )
 
     @input_error
     def execute(self, assistant: Assistant, args):
-        if len(args) < 2:
-            raise InvalidCommandError(self.name, "Name and phone are required.")
-
-        name = ""
-        phone = ""
-        birthday = None
-
         try:
-            name, phone, birthday = args
-        except ValueError:
-            name, phone = args
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
-        record = assistant.contact_book.find(name)
-        if record:
-            record.add_phone(phone)
-            if birthday:
-                record.add_birthday(birthday)
-            return "Contact updated."
+        name = parsed_args.get("name")
+        phones = parsed_args.get("phones")
+        birthday = parsed_args.get("birthday")
+        address = parsed_args.get("address")
+        email = parsed_args.get("email")
 
-        record = Contact(name)
-        record.add_phone(phone)
+        contact = assistant.contact_book.find(name)
+        if contact:
+            return f"Contact with name '{name}' already exists."
+
+        contact = Contact(name)
+
+        if len(phones) > 0:
+            for phone in phones:
+                contact.set_phone(phone)
 
         if birthday:
-            record.add_birthday(birthday)
+            contact.set_birthday(birthday)
 
-        assistant.contact_book.add_record(record)
+        if address:
+            contact.set_address(address)
+
+        if email:
+            contact.set_email(email)
+
+        assistant.contact_book.add(contact)
 
         return "Contact added."
 
@@ -92,79 +109,122 @@ class ChangeContactCommand(Command):
     def __init__(self):
         super().__init__(
             "change",
-            "Change a phone number of a contact. Format: change <name> <prev_phone> <new_phone> [birthday]",
+            "Change a contact. Format: change --current-name <current-name> --name [name] --phones [phone] --birthday [birthday] --address [address] --email [email]",
+        )
+        self.parser = ArgumentParser()
+        self.parser.add_argument("-cn", "--current-name", type=str, required=True)
+        self.parser.add_argument("-n", "--name", type=str, required=False)
+        self.parser.add_argument(
+            "-p",
+            "--phones",
+            action="extend",
+            nargs="+",
+            type=str,
+            required=False,
+            default=[],
+        )
+        self.parser.add_argument(
+            "-b", "--birthday", type=str, required=False, default=None
+        )
+        self.parser.add_argument(
+            "-a", "--address", type=str, required=False, default=None
+        )
+        self.parser.add_argument(
+            "-e", "--email", type=str, required=False, default=None
         )
 
     @input_error
     def execute(self, assistant: Assistant, args):
-        if len(args) < 3:
-            raise InvalidCommandError(
-                self.name, "Name, previous phone and new phone are required."
-            )
-
-        name = ""
-        prev_phone = ""
-        new_phone = ""
-        birthday = None
-
         try:
-            name, prev_phone, new_phone, birthday = args
-        except ValueError:
-            name, prev_phone, new_phone = args
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
-        record = assistant.contact_book.find(name)
-        if record:
-            record.edit_phone(prev_phone, new_phone)
+        current_name = parsed_args.get("current_name")
+        name = parsed_args.get("name")
+        phones = parsed_args.get("phones")
+        birthday = parsed_args.get("birthday")
+        address = parsed_args.get("address")
+        email = parsed_args.get("email")
 
-            if birthday:
-                record.add_birthday(birthday)
+        contact = assistant.contact_book.find(current_name)
 
-            return "Contact updated."
-        else:
-            return "Contact is not found."
+        if not contact:
+            return f"Contact with name '{current_name}' is not found."
+
+        if len(phones) > 0:
+            contact.phones.clear()
+            for phone in phones:
+                contact.set_phone(phone)
+
+        if birthday:
+            contact.set_birthday(birthday)
+
+        if address:
+            contact.set_address(address)
+
+        if email:
+            contact.set_email(email)
+
+        if name and name != current_name:
+            assistant.contact_book.delete(current_name)
+            contact.name.value = name
+            assistant.contact_book.add(contact)
+
+        return "Contact updated."
 
 
 class DeleteContactCommand(Command):
     def __init__(self):
         super().__init__(
             "delete",
-            "Delete a phone number of a contact. Format: delete <name> <phone>",
+            "Delete a contact. Format: delete --name <name>",
         )
+        self.parser = ArgumentParser()
+        self.parser.add_argument("-n", "--name", type=str, required=True)
 
     @input_error
     def execute(self, assistant: Assistant, args):
-        if len(args) != 2:
-            raise InvalidCommandError(self.name, "Name and phone are required.")
+        try:
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
-        name, phone = args
+        name = parsed_args.get("name")
 
-        record = assistant.contact_book.find(name)
-        if record:
-            record.delete_phone(phone)
-            return "Contact updated."
-        else:
-            return "Contact is not found."
+        contact = assistant.contact_book.find(name)
+
+        if not contact:
+            return f"Contact with name '{name}' is not found."
+
+        assistant.contact_book.delete(name)
+        return "Contact deleted."
 
 
 class ShowContactCommand(Command):
     def __init__(self):
         super().__init__(
             "show",
-            "Show contact information. Format: show <name>",
+            "Show contact information. Format: show --name <name>",
         )
+        self.parser = ArgumentParser()
+        self.parser.add_argument("-n", "--name", type=str, required=True)
 
     @input_error
     def execute(self, assistant: Assistant, args):
-        if len(args) != 1:
-            raise InvalidCommandError(self.name, "Name is required.")
+        try:
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
-        name = args[0]
+        name = parsed_args.get("name")
 
-        record = assistant.contact_book.find(name)
-        if record:
-            return str(record)
-        else:
-            return "Contact is not found."
+        contact = assistant.contact_book.find(name)
+
+        if not contact:
+            return f"Contact with name '{name}' is not found."
+
+        return str(contact)
 
 
 class ShowAllContactsCommand(Command):
@@ -175,194 +235,56 @@ class ShowAllContactsCommand(Command):
         return str(assistant.contact_book)
 
 
-class AddBirthdayCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "add-birthday",
-            "Add a birthday to a contact. Format: add-birthday <name> <birthday>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) != 2:
-            raise InvalidCommandError(self.name, "Name and birthday are required.")
-
-        name, birthday = args
-
-        record = assistant.contact_book.find(name)
-        if record:
-            record.add_birthday(birthday)
-            return "Birthday added."
-        else:
-            return "Contact is not found."
-
-
-class ChangeBirthdayCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "change-birthday",
-            "Change a birthday of a contact. Format: change-birthday <name> <birthday>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) != 2:
-            raise InvalidCommandError(self.name, "Name and birthday are required.")
-
-        name, birthday = args
-
-        record = assistant.contact_book.find(name)
-        if record:
-            record.add_birthday(birthday)
-            return "Birthday updated."
-        else:
-            return "Contact is not found."
-
-
-class ShowBirthdayCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "show-birthday",
-            "Show a birthday of a contact. Format: show-birthday <name>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) != 1:
-            raise InvalidCommandError(self.name, "Name is required.")
-
-        name = args[0]
-
-        record = assistant.contact_book.find(name)
-        if record:
-            return str(record.birthday)
-        else:
-            return "Contact is not found."
-
-
 class ShowBirthdaysCommand(Command):
     def __init__(self):
         super().__init__(
             "show-birthdays",
             "Show all birthdays per the next specified number of days."
-            + "Format: show-birthdays <days> (default 7)",
+            + "Format: show-birthdays --days <days> (default 7)",
         )
+        self.parser = ArgumentParser()
+        self.parser.add_argument("-d", "--days", type=int, required=False, default=7)
 
     @input_error
     def execute(self, assistant: Assistant, args):
         try:
-            days_delta = int(args[0])
-            if days_delta > 365:
-                raise InvalidCommandError(
-                    self.name, "The maximum value for days_delta is 365."
-                )
-        except IndexError:
-            days_delta = 7
-        except ValueError:
-            raise InvalidCommandError(self.name, "Invalid numbers of days.")
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
+
+        days_delta = parsed_args.get("days")
+
+        if days_delta < 2:
+            raise InvalidCommandError(self.name, "The minimum value for 'days' is 2.")
+
+        if days_delta > 365:
+            raise InvalidCommandError(self.name, "The maximum value for 'days' is 365.")
+
         return assistant.contact_book.get_birthdays_per_week(days_delta)
 
 
-class AddAddressCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "add-address",
-            "Add an address to a contact. Format: add-address <name> <address>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) < 2:
-            raise InvalidCommandError(self.name, "Name and address are required.")
-
-        name, *address = args
-
-        record = assistant.contact_book.find(name)
-        if record:
-            record.add_address(" ".join(map(str, address)))
-            return "Address added."
-        else:
-            return "Contact is not found."
-
-
-class ChangeAddressCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "change-address",
-            "Change an address of a contact. Format: change-address <name> <address>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) < 2:
-            raise InvalidCommandError(self.name, "Name and address are required.")
-
-        name, *address = args
-
-        record = assistant.contact_book.find(name)
-        if record:
-            record.add_address(" ".join(map(str, address)))
-            return "Address updated."
-        else:
-            return "Contact is not found."
-
-
-class ShowAddressCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "show-address",
-            "Show an address of a contact. Format: show-address <name>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) != 1:
-            raise InvalidCommandError(self.name, "Name is required.")
-
-        name = args[0]
-
-        record = assistant.contact_book.find(name)
-        if record:
-            return str(record.address)
-        else:
-            return "Contact is not found."
-
-
-class DeleteAddressCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "delete-address",
-            "Delete an address of a contact. Format: delete-address <name>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) != 1:
-            raise InvalidCommandError(self.name, "Name is required.")
-
-        name = args[0]
-
-        record = assistant.contact_book.find(name)
-        if record:
-            record.delete_address()
-            return "Address is deleted."
-        else:
-            return "Contact is not found."
-
-
-class FilterCommand(Command):
+class FilterContactsCommand(Command):
     def __init__(self):
         super().__init__(
             "filter",
-            "Filter contacts by search criteria. Format: filter <search_criteria>",
+            "Filter contacts by search criteria. Format: filter --criteria <search_criteria>",
         )
+        self.parser = ArgumentParser()
+        self.parser.add_argument("-cr", "--criteria", type=str, required=True)
 
     @input_error
     def execute(self, assistant: Assistant, args):
-        if len(args) != 1:
-            raise InvalidCommandError(self.name, "Search criteria is required.")
+        try:
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
-        criteria = args[0]
+        criteria = parsed_args.get("criteria")
+
+        if len(criteria) < 2:
+            raise InvalidCommandError(
+                self.name, "The minimum length of 'criteria' is 2 characters."
+            )
 
         contacts = assistant.contact_book.filter(criteria)
         if len(contacts) == 0:
@@ -391,7 +313,7 @@ class AddNoteCommand(Command):
         try:
             parsed_args = vars(self.parser.parse_args(args))
         except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Title is required.") from exc
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
         title = parsed_args.get("title")
         content = parsed_args.get("content")
@@ -430,7 +352,7 @@ class ChangeNoteCommand(Command):
         try:
             parsed_args = vars(self.parser.parse_args(args))
         except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Current title is required.") from exc
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
         current_title = parsed_args.get("current_title")
         title = parsed_args.get("title")
@@ -460,7 +382,7 @@ class DeleteNoteCommand(Command):
         try:
             parsed_args = vars(self.parser.parse_args(args))
         except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Title is required.") from exc
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
         title = parsed_args.get("title")
 
@@ -490,7 +412,7 @@ class ShowNoteCommand(Command):
         try:
             parsed_args = vars(self.parser.parse_args(args))
         except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Title is required.") from exc
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
         title = parsed_args.get("title")
 
@@ -512,11 +434,11 @@ class ShowAllNotesCommand(Command):
         return str(assistant.note_book)
 
 
-class SearchNotesCommand(Command):
+class FilterNotesCommand(Command):
     def __init__(self):
         super().__init__(
-            "search-notes",
-            "Search notes by criteria. Format: search-notes --criteria <criteria>",
+            "filter-notes",
+            "Filter notes by criteria. Format: filter-notes --criteria <criteria>",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-cr", "--criteria", type=str, required=True)
@@ -526,11 +448,14 @@ class SearchNotesCommand(Command):
         try:
             parsed_args = vars(self.parser.parse_args(args))
         except SystemExit as exc:
-            raise InvalidCommandError(
-                self.name, "Search criteria is required."
-            ) from exc
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
         criteria = parsed_args.get("criteria")
+
+        if len(criteria) < 2:
+            raise InvalidCommandError(
+                self.name, "The minimum length of 'criteria' is 2 characters."
+            )
 
         notes = assistant.note_book.search(criteria)
         if len(notes) == 0:
@@ -539,11 +464,11 @@ class SearchNotesCommand(Command):
         return "\n".join(str(note) for note in notes)
 
 
-class SearchNotesByTagsCommand(Command):
+class FilterNotesByTagsCommand(Command):
     def __init__(self):
         super().__init__(
-            "search-notes-by-tags",
-            "Search notes by tags. Format: search-notes-by-tags --tags [tags]",
+            "filter-notes-by-tags",
+            "Filter notes by tags. Format: filter-notes-by-tags --tags [tags]",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument(
@@ -555,9 +480,7 @@ class SearchNotesByTagsCommand(Command):
         try:
             parsed_args = vars(self.parser.parse_args(args))
         except SystemExit as exc:
-            raise InvalidCommandError(
-                self.name, "At least one tag is required."
-            ) from exc
+            raise InvalidCommandError(self.name, "Invalid arguments") from exc
 
         tags = parsed_args.get("tags")
 
@@ -595,126 +518,23 @@ class HelpCommand(Command):
         return "\n".join(str(c) for c in COMMANDS)
 
 
-class AddEmailCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "add-email",
-            "Add an email address to a contact. Format: add-email <name> <email>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) != 2:
-            raise InvalidCommandError(self.name, "Name and email are required.")
-
-        name, email = args
-
-        record = assistant.contact_book.find(name)
-        if record:
-            record.add_email(email)
-            return "Email added."
-        else:
-            return "Contact is not found."
-
-
-class ChangeEmailCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "change-email",
-            "Change an email address of a contact. Format: change-email <name> <email>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) != 2:
-            raise InvalidCommandError(self.name, "Name and email are required.")
-
-        name, email = args
-
-        record = assistant.contact_book.find(name)
-        if record:
-            record.change_email(email)
-            return "Email updated."
-        else:
-            return "Contact is not found."
-
-
-class DeleteEmailCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "delete-email",
-            "Delete the email address of a contact. Format: delete-email <name>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) != 1:
-            raise InvalidCommandError(self.name, "Name is required.")
-
-        name = args[0]
-
-        record = assistant.contact_book.find(name)
-        if record:
-            record.delete_email()
-            return "Email deleted."
-        else:
-            return "Contact is not found."
-
-
-class ShowEmailCommand(Command):
-    def __init__(self):
-        super().__init__(
-            "show-email",
-            "Show the email address of a contact. Format: show-email <name>",
-        )
-
-    @input_error
-    def execute(self, assistant: Assistant, args):
-        if len(args) != 1:
-            raise InvalidCommandError(self.name, "Name is required.")
-
-        name = args[0]
-
-        record = assistant.contact_book.find(name)
-        if record:
-            email = record.show_email()
-            if email is not None:
-                return f"Email: {email}"
-            else:
-                return "No email address associated with this contact."
-        else:
-            return "Contact is not found."
-
-
 COMMANDS = [
-    HelloCommand(),
     AddContactCommand(),
     ChangeContactCommand(),
     DeleteContactCommand(),
     ShowContactCommand(),
     ShowAllContactsCommand(),
-    AddBirthdayCommand(),
-    ChangeBirthdayCommand(),
-    ShowBirthdayCommand(),
     ShowBirthdaysCommand(),
-    AddAddressCommand(),
-    ChangeAddressCommand(),
-    ShowAddressCommand(),
-    DeleteAddressCommand(),
-    FilterCommand(),
+    FilterContactsCommand(),
     AddNoteCommand(),
     ChangeNoteCommand(),
     DeleteNoteCommand(),
     ShowNoteCommand(),
     ShowAllNotesCommand(),
-    SearchNotesCommand(),
-    SearchNotesByTagsCommand(),
+    FilterNotesCommand(),
+    FilterNotesByTagsCommand(),
     ExitCommand(),
     HelpCommand(),
-    AddEmailCommand(),
-    ChangeEmailCommand(),
-    DeleteEmailCommand(),
-    ShowEmailCommand(),
 ]
 
 COMMANDS_MAP = {(c.name, c.alias): c for c in COMMANDS}
