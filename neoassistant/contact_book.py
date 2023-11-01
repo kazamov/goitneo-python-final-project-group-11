@@ -21,10 +21,10 @@ class Contact:
 
         if self.birthday:
             result += f", birthday: {str(self.birthday)}"
-        
+
         if self.address:
             result += f", address: {str(self.address)}"
-            
+
         if self.email:  # Add email to the string representation
             result += f", email: {self.email.value}"
 
@@ -98,7 +98,7 @@ class ContactBook(UserDict):
         if name in self.data:
             self.data.pop(name)
 
-    def get_birthdays_per_week(self, days_delta = 7):
+    def get_birthdays_per_week(self, days_delta=7):
         user_records = self.data.values()
 
         if len(user_records) == 0:

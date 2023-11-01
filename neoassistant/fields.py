@@ -88,9 +88,7 @@ class Email(Field):
     @value.setter
     def value(self, value: str):
         if not self.is_valid_email(value):
-            raise InvalidValueFieldError(
-                "email", value, "Invalid email format."
-            )
+            raise InvalidValueFieldError("email", value, "Invalid email format.")
 
         self.__value = value
 
@@ -99,8 +97,8 @@ class Email(Field):
         # Use a regular expression to validate email format
         email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return re.match(email_pattern, email) is not None
-        
-        
+
+
 class Address(Field):
     """Class for address field"""
 

@@ -262,6 +262,7 @@ class ShowBirthdaysCommand(Command):
             raise InvalidCommandError(self.name, "Invalid numbers of days.")
         return assistant.contact_book.get_birthdays_per_week(days_delta)
 
+
 class AddAddressCommand(Command):
     def __init__(self):
         super().__init__(
@@ -278,7 +279,7 @@ class AddAddressCommand(Command):
 
         record = assistant.contact_book.find(name)
         if record:
-            record.add_address(' '.join(map(str, address)))
+            record.add_address(" ".join(map(str, address)))
             return "Address added."
         else:
             return "Contact is not found."
@@ -300,7 +301,7 @@ class ChangeAddressCommand(Command):
 
         record = assistant.contact_book.find(name)
         if record:
-            record.add_address(' '.join(map(str, address)))
+            record.add_address(" ".join(map(str, address)))
             return "Address updated."
         else:
             return "Contact is not found."
@@ -326,6 +327,7 @@ class ShowAddressCommand(Command):
         else:
             return "Contact is not found."
 
+
 class DeleteAddressCommand(Command):
     def __init__(self):
         super().__init__(
@@ -350,7 +352,10 @@ class DeleteAddressCommand(Command):
 
 class FilterCommand(Command):
     def __init__(self):
-        super().__init__("filter", "Filter contacts by search criteria. Format: filter <search_criteria>")
+        super().__init__(
+            "filter",
+            "Filter contacts by search criteria. Format: filter <search_criteria>",
+        )
 
     @input_error
     def execute(self, assistant: Assistant, args):
@@ -362,7 +367,7 @@ class FilterCommand(Command):
         contacts = assistant.contact_book.filter(criteria)
         if len(contacts) == 0:
             return f"Contacts that satisfy search criteria '{criteria}' are not found."
-        
+
         return "\n".join(str(contact) for contact in contacts)
 
 
@@ -589,6 +594,7 @@ class HelpCommand(Command):
 
         return "\n".join(str(c) for c in COMMANDS)
 
+
 class AddEmailCommand(Command):
     def __init__(self):
         super().__init__(
@@ -678,6 +684,7 @@ class ShowEmailCommand(Command):
                 return "No email address associated with this contact."
         else:
             return "Contact is not found."
+
 
 COMMANDS = [
     HelloCommand(),
