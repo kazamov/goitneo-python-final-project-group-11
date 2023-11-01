@@ -265,7 +265,7 @@ class ShowBirthdaysCommand(Command):
 
 class FilterCommand(Command):
     def __init__(self):
-        super().__init__("filter", "Filter contacts by seach criteria.")
+        super().__init__("filter", "Filter contacts by search criteria. Format: filter <search_criteria>")
 
     @input_error
     def execute(self, assistant: Assistant, args):
@@ -276,7 +276,7 @@ class FilterCommand(Command):
 
         contacts = assistant.contact_book.filter(criteria)
         if len(contacts) == 0:
-            return f"Contacts that satisfy seach criteria '{criteria}' are not found."
+            return f"Contacts that satisfy search criteria '{criteria}' are not found."
         
         return "\n".join(str(contact) for contact in contacts)
 
