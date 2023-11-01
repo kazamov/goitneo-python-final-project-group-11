@@ -263,6 +263,24 @@ class ShowBirthdaysCommand(Command):
         return assistant.contact_book.get_birthdays_per_week(days_delta)
 
 
+class FilterCommand(Command):
+    def __init__(self):
+        super().__init__("filter", "Filter contacts by seach criteria.")
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Search criteria is required.")
+
+        criteria = args[0]
+
+        contacts = assistant.contact_book.filter(criteria)
+        if len(contacts) == 0:
+            return f"Contacts that satisfy seach criteria '{criteria}' are not found."
+        
+        return "\n".join(str(contact) for contact in contacts)
+
+
 class AddNoteCommand(Command):
     def __init__(self):
         super().__init__(
@@ -498,6 +516,7 @@ COMMANDS = [
     ChangeBirthdayCommand(),
     ShowBirthdayCommand(),
     ShowBirthdaysCommand(),
+    FilterCommand(),
     AddNoteCommand(),
     ChangeNoteCommand(),
     DeleteNoteCommand(),
