@@ -262,6 +262,91 @@ class ShowBirthdaysCommand(Command):
             raise InvalidCommandError(self.name, "Invalid numbers of days.")
         return assistant.contact_book.get_birthdays_per_week(days_delta)
 
+class AddAddressCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "add-address",
+            "Add an address to a contact. Format: add-address <name> <address>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) < 2:
+            raise InvalidCommandError(self.name, "Name and address are required.")
+
+        name, *address = args
+
+        record = assistant.contact_book.find(name)
+        if record:
+            record.add_address(' '.join(map(str, address)))
+            return "Address added."
+        else:
+            return "Contact is not found."
+
+
+class ChangeAddressCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "change-address",
+            "Change an address of a contact. Format: change-address <name> <address>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) < 2:
+            raise InvalidCommandError(self.name, "Name and address are required.")
+
+        name, *address = args
+
+        record = assistant.contact_book.find(name)
+        if record:
+            record.add_address(' '.join(map(str, address)))
+            return "Address updated."
+        else:
+            return "Contact is not found."
+
+
+class ShowAddressCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "show-address",
+            "Show an address of a contact. Format: show-address <name>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Name is required.")
+
+        name = args[0]
+
+        record = assistant.contact_book.find(name)
+        if record:
+            return str(record.address)
+        else:
+            return "Contact is not found."
+
+class DeleteAddressCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "delete-address",
+            "Delete an address of a contact. Format: delete-address <name>",
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Name is required.")
+
+        name = args[0]
+
+        record = assistant.contact_book.find(name)
+        if record:
+            record.delete_address()
+            return "Address is deleted."
+        else:
+            return "Contact is not found."
+
 
 class AddNoteCommand(Command):
     def __init__(self):
@@ -498,6 +583,10 @@ COMMANDS = [
     ChangeBirthdayCommand(),
     ShowBirthdayCommand(),
     ShowBirthdaysCommand(),
+    AddAddressCommand(),
+    ChangeAddressCommand(),
+    ShowAddressCommand(),
+    DeleteAddressCommand(),
     AddNoteCommand(),
     ChangeNoteCommand(),
     DeleteNoteCommand(),

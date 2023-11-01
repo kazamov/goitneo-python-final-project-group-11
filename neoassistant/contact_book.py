@@ -1,7 +1,7 @@
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
 
-from .fields import Name, Phone, Birthday
+from .fields import Name, Phone, Birthday, Address
 
 
 class Contact:
@@ -9,14 +9,18 @@ class Contact:
 
     def __init__(self, name):
         self.name = Name(name)
-        self.birthday = None
+        self.birthday: Birthday = None
         self.phones: list[Phone] = []
+        self.address: Address = None
 
     def __str__(self):
         result = f"Contact name: {self.name.value}, phones: {', '.join(p.value for p in self.phones)}"
 
         if self.birthday:
             result += f", birthday: {str(self.birthday)}"
+        
+        if self.address:
+            result += f", address: {str(self.address)}"
 
         return result
 
@@ -43,6 +47,15 @@ class Contact:
 
     def add_birthday(self, birthday: str):
         self.birthday = Birthday(birthday)
+
+    def add_address(self, address: str):
+        self.address = Address(address)
+
+    def delete_address(self):
+        self.address = None
+
+    def show_address(self) -> Address:
+        return self.address
 
 
 class ContactBook(UserDict):
