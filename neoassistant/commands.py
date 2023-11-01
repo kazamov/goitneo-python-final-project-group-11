@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from argparse import ArgumentError, ArgumentParser, ArgumentTypeError
 
 from .note_book import Note
 from .assistant import Assistant
@@ -266,21 +267,33 @@ class AddNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "add-note",
-            "Add a new note. Format: add-note <title> <content> [tags]",
+            "Add a new note. Format: add-note --title <title> --content <content> --tags [tags]",
+        )
+        self.parser = ArgumentParser()
+        self.parser.add_argument("-t", "--title", type=str, required=True)
+        self.parser.add_argument(
+            "-c", "--content", type=str, required=False, default=""
+        )
+        self.parser.add_argument(
+            "--tags", action="extend", nargs="+", type=str, required=False, default=[]
         )
 
     @input_error
     def execute(self, assistant: Assistant, args):
-        if len(args) < 2:
-            raise InvalidCommandError(self.name, "Title and content are required.")
+        try:
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(self.name, "Title is required.") from exc
 
-        title, content = args
+        title = parsed_args.get("title")
+        content = parsed_args.get("content")
+        tags = parsed_args.get("tags")
 
-        note = assistant.note_book.find(title)
+        note = assistant.note_book.find_by_title(title)
         if note:
             return f"Note with title '{title}' already exists."
 
-        note = Note(title, content)
+        note = Note(title, content, tags)
         assistant.note_book.add_record(note)
 
         return "Note added."
@@ -290,23 +303,37 @@ class ChangeNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "change-note",
-            "Change a note. Format: change-note <title> <new_title> <new_content>",
+            "Change a note. Format: change-note --current-title <title> --title [new_title] --content [new_content] --tags [tags]",
+        )
+        self.parser = ArgumentParser()
+        self.parser.add_argument("-ct", "--current-title", type=str, required=True)
+        self.parser.add_argument(
+            "-t", "--title", type=str, required=False, default=None
+        )
+        self.parser.add_argument(
+            "-c", "--content", type=str, required=False, default=None
+        )
+        self.parser.add_argument(
+            "--tags", action="extend", nargs="+", type=str, required=False, default=None
         )
 
     @input_error
     def execute(self, assistant: Assistant, args):
-        if len(args) < 3:
-            raise InvalidCommandError(
-                self.name, "Title, new title and new content are required."
-            )
+        try:
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(self.name, "Current title is required.") from exc
 
-        title, new_title, new_content = args
+        current_title = parsed_args.get("current_title")
+        title = parsed_args.get("title")
+        content = parsed_args.get("content")
+        tags = parsed_args.get("tags")
 
-        note = assistant.note_book.find(title)
+        note = assistant.note_book.find_by_title(current_title)
         if not note:
-            return f"Note with title '{title}' is not found."
+            return f"Note with title '{current_title}' is not found."
 
-        assistant.note_book.change(title, new_title, new_content)
+        assistant.note_book.change(current_title, title, content, tags)
 
         return "Note updated."
 
@@ -315,17 +342,22 @@ class DeleteNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "delete-note",
-            "Delete a note. Format: delete-note <title>",
+            "Delete a note. Format: delete-note --title <title>",
         )
+        self.parser = ArgumentParser()
+        self.parser.add_argument("-t", "--title", type=str, required=True)
 
     @input_error
     def execute(self, assistant: Assistant, args):
-        if len(args) != 1:
-            raise InvalidCommandError(self.name, "Title is required.")
+        try:
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(self.name, "Title is required.") from exc
 
-        title = args[0]
+        title = parsed_args.get("title")
 
-        note = assistant.note_book.find(title)
+        note = assistant.note_book.find_by_title(title)
+
         if not note:
             return f"Note with title '{title}' is not found."
 
@@ -338,17 +370,23 @@ class ShowNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "show-note",
-            "Show a note. Format: show-note <title>",
+            "Show a note. Format: show-note --title <title>",
+        )
+        self.parser = ArgumentParser(exit_on_error=True)
+        self.parser.add_argument(
+            "-t", "--title", type=str, required=True, help="Note title"
         )
 
     @input_error
     def execute(self, assistant: Assistant, args):
-        if len(args) != 1:
-            raise InvalidCommandError(self.name, "Title is required.")
+        try:
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(self.name, "Title is required.") from exc
 
-        title = args[0]
+        title = parsed_args.get("title")
 
-        note = assistant.note_book.find(title)
+        note = assistant.note_book.find_by_title(title)
         if not note:
             return f"Note with title '{title}' is not found."
 
@@ -370,19 +408,54 @@ class SearchNotesCommand(Command):
     def __init__(self):
         super().__init__(
             "search-notes",
-            "Search notes by criteria. Format: search-notes <criteria>",
+            "Search notes by criteria. Format: search-notes --criteria <criteria>",
         )
+        self.parser = ArgumentParser()
+        self.parser.add_argument("-cr", "--criteria", type=str, required=True)
 
     @input_error
     def execute(self, assistant: Assistant, args):
-        if len(args) != 1:
-            raise InvalidCommandError(self.name, "Search criteria is required.")
+        try:
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(
+                self.name, "Search criteria is required."
+            ) from exc
 
-        criteria = args[0]
+        criteria = parsed_args.get("criteria")
 
         notes = assistant.note_book.search(criteria)
         if len(notes) == 0:
             return f"Notes with criteria '{criteria}' are not found."
+
+        return "\n".join(str(note) for note in notes)
+
+
+class SearchNotesByTagsCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "search-notes-by-tags",
+            "Search notes by tags. Format: search-notes-by-tags --tags [tags]",
+        )
+        self.parser = ArgumentParser()
+        self.parser.add_argument(
+            "--tags", action="extend", nargs="+", type=str, required=True
+        )
+
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        try:
+            parsed_args = vars(self.parser.parse_args(args))
+        except SystemExit as exc:
+            raise InvalidCommandError(
+                self.name, "At least one tag is required."
+            ) from exc
+
+        tags = parsed_args.get("tags")
+
+        notes = assistant.note_book.search_by_tags(tags)
+        if len(notes) == 0:
+            return f"Notes with tags '{', '.join(tags)}' are not found."
 
         return "\n".join(str(note) for note in notes)
 
@@ -431,6 +504,7 @@ COMMANDS = [
     ShowNoteCommand(),
     ShowAllNotesCommand(),
     SearchNotesCommand(),
+    SearchNotesByTagsCommand(),
     ExitCommand(),
     HelpCommand(),
 ]

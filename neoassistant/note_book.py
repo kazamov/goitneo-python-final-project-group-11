@@ -2,40 +2,68 @@ from collections import UserDict
 
 
 class Note:
-    def __init__(self, title: str, content: str):
+    def __init__(self, title: str, content: str, tags: list[str]):
         self.title = title
         self.content = content
+        self.tags = tags
 
     def __str__(self):
-        return f"Title: {self.title}\nContent: {self.content}\n"
+        result = f"Title: {self.title}\n"
+        if len(self.content) > 0:
+            result += f"Content: {self.content}\n"
+        if len(self.tags) > 0:
+            result += f"Tags: {', '.join(self.tags)}\n"
+        return result
 
 
 class NoteBook(UserDict):
     def __str__(self):
+        if len(self.data) == 0:
+            return "Notebook is empty."
+
         return "\n".join(str(note) for note in self.data.values())
 
     def add_record(self, note: Note):
         self.data[note.title] = note
 
-    def find(self, title: str) -> Note:
+    def find_by_title(self, title: str) -> Note:
         return self.data[title] if title in self.data else None
 
     def delete(self, title: str):
         if title in self.data:
             self.data.pop(title)
 
-    def change(self, title: str, new_title: str, new_content: str):
-        note = self.find(title)
+    def change(
+        self,
+        current_title: str,
+        title: str | None,
+        content: str | None,
+        tags: list[str] | None,
+    ):
+        note = self.find_by_title(current_title)
         if note:
-            note.title = new_title
-            note.content = new_content
-            self.data[new_title] = note
-            self.data.pop(title)
+            if title:
+                note.title = title
+            if content:
+                note.content = content
+            if tags:
+                note.tags = tags
+
+            self.data[title] = note
+            self.data.pop(current_title)
 
     def search(self, criteria: str) -> list[Note]:
         return list(
             filter(
                 lambda note: criteria in note.title or criteria in note.content,
+                self.data.values(),
+            )
+        )
+
+    def search_by_tags(self, tags: list[str]) -> list[Note]:
+        return list(
+            filter(
+                lambda note: any(tag in note.tags for tag in tags),
                 self.data.values(),
             )
         )
