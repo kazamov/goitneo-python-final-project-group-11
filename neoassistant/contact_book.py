@@ -49,6 +49,9 @@ class ContactBook(UserDict):
     """Class for contact book"""
 
     def __str__(self) -> str:
+        if len(self.data) == 0:
+            return "Contact book is empty."
+
         return "\n".join(str(record) for record in self.data.values())
 
     def add_record(self, record: Contact):
