@@ -21,7 +21,7 @@ class NoteBook(UserDict):
         if len(self.data) == 0:
             return "Notebook is empty."
 
-        return "\n".join(str(note) for note in self.data.values())
+        return "\n".join(str(note) for note in self.sort_by_title(self.data.values()))
 
     def add_record(self, note: Note):
         self.data[note.title] = note
@@ -49,21 +49,29 @@ class NoteBook(UserDict):
             if tags:
                 note.tags = tags
 
-            self.data[title] = note
-            self.data.pop(current_title)
+            if title and title != current_title:
+                self.data[title] = note
+                self.data.pop(current_title)
 
     def search(self, criteria: str) -> list[Note]:
-        return list(
-            filter(
-                lambda note: criteria in note.title or criteria in note.content,
-                self.data.values(),
+        return self.sort_by_title(
+            list(
+                filter(
+                    lambda note: criteria in note.title or criteria in note.content,
+                    self.data.values(),
+                )
             )
         )
 
     def search_by_tags(self, tags: list[str]) -> list[Note]:
-        return list(
-            filter(
-                lambda note: any(tag in note.tags for tag in tags),
-                self.data.values(),
+        return self.sort_by_title(
+            list(
+                filter(
+                    lambda note: any(tag in note.tags for tag in tags),
+                    self.data.values(),
+                )
             )
         )
+
+    def sort_by_title(self, notes: list[Note]):
+        return sorted(notes, key=lambda note: note.title)
