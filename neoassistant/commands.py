@@ -241,10 +241,25 @@ class ShowBirthdayCommand(Command):
 
 class ShowBirthdaysCommand(Command):
     def __init__(self):
-        super().__init__("show-birthdays", "Show all birthdays per next 7 days.")
+        super().__init__(
+            "show-birthdays",
+            "Show all birthdays per the next specified number of days."
+            + "Format: show-birthdays <days> (default 7)",
+        )
 
-    def execute(self, assistant: Assistant, _):
-        return assistant.contact_book.get_birthdays_per_week()
+    @input_error
+    def execute(self, assistant: Assistant, args):
+        try:
+            days_delta = int(args[0])
+            if days_delta > 365:
+                raise InvalidCommandError(
+                    self.name, "The maximum value for days_delta is 365."
+                )
+        except IndexError:
+            days_delta = 7
+        except ValueError:
+            raise InvalidCommandError(self.name, "Invalid numbers of days.")
+        return assistant.contact_book.get_birthdays_per_week(days_delta)
 
 
 class AddNoteCommand(Command):
