@@ -1,15 +1,19 @@
 from .assistant import Neoassistant
 from .commands import get_command, get_suggested_commands, parse_input
-
+from .rich_formatter import RichFormatter
 
 NEOASSISTANT_DATA_FILENAME = "neoassistant-data.bin"
+formatter = RichFormatter()
 
 
 def main():
     neoassistant = Neoassistant()
     neoassistant.load(NEOASSISTANT_DATA_FILENAME)
 
-    print("Welcome to the neoassistant bot!")
+
+    formatter.format_and_print(
+        "Welcome to the neoassistant bot!",
+        style="orange1")
     while True:
         user_input = input("Enter a command: ")
         command_name, *args = parse_input(user_input)
@@ -26,7 +30,7 @@ def main():
             suggested_commands = get_suggested_commands(command_name)
 
             if len(suggested_commands) == 0:
-                print("Unknown command.")
+                formatter.format_and_print("Unknown command.", style="red")
             else:
                 print(f"Did you mean: {', '.join(suggested_commands)}?")
 

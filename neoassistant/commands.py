@@ -1,11 +1,15 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from shlex import split
+from rich.table import Table
+from rich.text import Text
+from rich.padding import Padding
 
 from .note_book import Note
 from .assistant import Assistant
 from .contact_book import ContactBook, Contact
 from .errors import InvalidCommandError, InvalidValueFieldError
+from .rich_formatter import RichFormatter
 
 
 def levenshtein_distance(s1, s2):
@@ -66,12 +70,25 @@ class Command(ABC):
     def execute(self, assistant: Assistant, args):
         pass
 
+    @staticmethod
+    def print_command_list():
+        formatter = RichFormatter()
+        table = Table(title="Available Commands")
+        table.add_column("Command", style="bold")
+        table.add_column("Description")
+        
+        for command in COMMANDS:
+            table.add_row(command.name, Text(command.description))
+            table.add_row(Padding("", (0, 1)))
+
+        formatter.format_and_print(table)
+
 
 class AddContactCommand(Command):
     def __init__(self):
         super().__init__(
             "add",
-            "Add a new contact. Format: add --name <name> --phones [phone] --birthday [birthday] --address [address] --email [email]",
+            "Add a new contact.\nFormat: add --name <name> --phones [phone] --birthday [birthday] --address [address] --email [email]",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-n", "--name", type=str, required=True)
@@ -135,7 +152,7 @@ class ChangeContactCommand(Command):
     def __init__(self):
         super().__init__(
             "change",
-            "Change a contact. Format: change --current-name <current-name> --name [name] --phones [phone] --birthday [birthday] --address [address] --email [email]",
+            "Change a contact.\nFormat: change --current-name <current-name> --name [name] --phones [phone] --birthday [birthday] --address [address] --email [email]",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-cn", "--current-name", type=str, required=True)
@@ -204,7 +221,7 @@ class DeleteContactCommand(Command):
     def __init__(self):
         super().__init__(
             "delete",
-            "Delete a contact. Format: delete --name <name>",
+            "Delete a contact.\nFormat: delete --name <name>",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-n", "--name", type=str, required=True)
@@ -231,7 +248,7 @@ class ShowContactCommand(Command):
     def __init__(self):
         super().__init__(
             "show",
-            "Show contact information. Format: show --name <name>",
+            "Show contact information.\nFormat: show --name <name>",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-n", "--name", type=str, required=True)
@@ -266,7 +283,7 @@ class ShowBirthdaysCommand(Command):
         super().__init__(
             "show-birthdays",
             "Show all birthdays per the next specified number of days."
-            + "Format: show-birthdays --days <days> (default 7)",
+            +"\nFormat: show-birthdays --days <days> (default 7)",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-d", "--days", type=int, required=False, default=7)
@@ -293,7 +310,7 @@ class FilterContactsCommand(Command):
     def __init__(self):
         super().__init__(
             "filter",
-            "Filter contacts by search criteria. Format: filter --criteria <search_criteria>",
+            "Filter contacts by search criteria.\nFormat: filter --criteria <search_criteria>",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-cr", "--criteria", type=str, required=True)
@@ -323,7 +340,7 @@ class AddNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "add-note",
-            "Add a new note. Format: add-note --title <title> --content <content> --tags [tags]",
+            "Add a new note.\nFormat: add-note --title <title> --content <content> --tags [tags]",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-t", "--title", type=str, required=True)
@@ -359,7 +376,7 @@ class ChangeNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "change-note",
-            "Change a note. Format: change-note --current-title <title> --title [new_title] --content [new_content] --tags [tags]",
+            "Change a note.\nFormat: change-note --current-title <title> --title [new_title] --content [new_content] --tags [tags]",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-ct", "--current-title", type=str, required=True)
@@ -398,7 +415,7 @@ class DeleteNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "delete-note",
-            "Delete a note. Format: delete-note --title <title>",
+            "Delete a note.\nFormat: delete-note --title <title>",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-t", "--title", type=str, required=True)
@@ -426,7 +443,7 @@ class ShowNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "show-note",
-            "Show a note. Format: show-note --title <title>",
+            "Show a note.\nFormat: show-note --title <title>",
         )
         self.parser = ArgumentParser(exit_on_error=True)
         self.parser.add_argument(
@@ -464,7 +481,7 @@ class FilterNotesCommand(Command):
     def __init__(self):
         super().__init__(
             "filter-notes",
-            "Filter notes by criteria. Format: filter-notes --criteria <criteria>",
+            "Filter notes by criteria.\nFormat: filter-notes --criteria <criteria>",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-cr", "--criteria", type=str, required=True)
@@ -494,7 +511,7 @@ class FilterNotesByTagsCommand(Command):
     def __init__(self):
         super().__init__(
             "filter-notes-by-tags",
-            "Filter notes by tags. Format: filter-notes-by-tags --tags [tags]",
+            "Filter notes by tags.\nFormat: filter-notes-by-tags --tags [tags]",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument(
@@ -529,7 +546,7 @@ class HelpCommand(Command):
     def __init__(self):
         super().__init__(
             "help",
-            "Show all available commands or a single command info. Format: help [command]",
+            "Show all available commands or a single command info.\nFormat: help [command]",
         )
 
     def execute(self, _, args):
@@ -541,8 +558,8 @@ class HelpCommand(Command):
 
             return f"Command '{command_name}' is not found."
 
-        return "\n".join(str(c) for c in COMMANDS)
-
+        self.print_command_list()
+        return ""
 
 COMMANDS: list[Command] = [
     AddContactCommand(),
