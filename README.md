@@ -50,7 +50,7 @@ Before using Neoassistant Bot, ensure you have the following dependencies instal
 ## Usage
 
   
-1. You can install the application via pip to your local machine:
+1. You can install the application via pip to your local machine (for Mac use pip3 command):
 
 
 ```bash
@@ -60,7 +60,7 @@ pip install neoassistant
 2. Run the main Python script anywhere in the console (two options):
 ```bash
 python -m neoassistant
-# or you can write:
+# or you can write the following command anywhere in the console:
 neoassistant
 ```
 4. The bot will start, and you can interact with it by entering commands.
