@@ -2,7 +2,6 @@
 # Neoassistant Bot
 
   
-
 Neoassistant Bot is a Python-based assistant that allows you to manage contacts and notes through a command-line interface. This README will guide you through using the bot and provide essential information about the codebase.
 
   
@@ -51,20 +50,18 @@ Before using Neoassistant Bot, ensure you have the following dependencies instal
 ## Usage
 
   
-1. Clone the repository to your local machine:
-
+1. You can install the application via pip to your local machine:
 
 
 ```bash
-git clone https://github.com/your-repo/neoassistant-bot.git
+pip install neoassistant
 ```
-2. Change your current directory to the project folder:
+
+2. Run the main Python script anywhere in the console (two options):
 ```bash
-cd neoassistant-bot
-```
-3. Run the main Python script:
-```bash
-python main.py
+python -m neoassistant
+# or you can write:
+neoassistant
 ```
 4. The bot will start, and you can interact with it by entering commands.
 
