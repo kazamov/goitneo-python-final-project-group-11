@@ -1,10 +1,36 @@
 from abc import ABC, abstractmethod
-from argparse import ArgumentError, ArgumentParser, ArgumentTypeError
+from argparse import ArgumentParser
+from shlex import split
 
 from .note_book import Note
 from .assistant import Assistant
 from .contact_book import ContactBook, Contact
 from .errors import InvalidCommandError, InvalidValueFieldError
+
+
+def levenshtein_distance(s1, s2):
+    m, n = len(s1), len(s2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+
+    for i in range(m + 1):
+        dp[i][0] = i
+
+    for j in range(n + 1):
+        dp[0][j] = j
+
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            cost = 0 if s1[i - 1] == s2[j - 1] else 1
+            dp[i][j] = min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost)
+
+    return dp[m][n]
+
+
+def parse_input(user_input):
+    """Parse input string and return command name and arguments"""
+    cmd, *args = split(user_input)
+    cmd = cmd.strip().lower()
+    return cmd, *args
 
 
 def input_error(func):
@@ -518,7 +544,7 @@ class HelpCommand(Command):
         return "\n".join(str(c) for c in COMMANDS)
 
 
-COMMANDS = [
+COMMANDS: list[Command] = [
     AddContactCommand(),
     ChangeContactCommand(),
     DeleteContactCommand(),
@@ -539,6 +565,8 @@ COMMANDS = [
 
 COMMANDS_MAP = {(c.name, c.alias): c for c in COMMANDS}
 
+VALID_COMMANDS = [c.name for c in COMMANDS]
+
 
 def get_command(command_name: str):
     command = None
@@ -547,3 +575,11 @@ def get_command(command_name: str):
             command = handler
             break
     return command
+
+
+def get_suggested_commands(command_name: str):
+    suggested_commands = []
+    for valid_command in VALID_COMMANDS:
+        if levenshtein_distance(command_name, valid_command) <= 2:
+            suggested_commands.append(valid_command)
+    return suggested_commands

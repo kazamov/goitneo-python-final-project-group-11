@@ -1,18 +1,8 @@
-from argparse import ArgumentParser
-from shlex import split
-
 from .assistant import Neoassistant
-from .commands import get_command
+from .commands import get_command, get_suggested_commands, parse_input
 
 
 NEOASSISTANT_DATA_FILENAME = "neoassistant-data.bin"
-
-
-def parse_input(user_input):
-    """Parse input string and return command name and arguments"""
-    cmd, *args = split(user_input)
-    cmd = cmd.strip().lower()
-    return cmd, *args
 
 
 def main():
@@ -33,7 +23,12 @@ def main():
                 neoassistant.save(NEOASSISTANT_DATA_FILENAME)
                 break
         else:
-            print("Unknown command.")
+            suggested_commands = get_suggested_commands(command_name)
+
+            if len(suggested_commands) == 0:
+                print("Unknown command.")
+            else:
+                print(f"Did you mean: {', '.join(suggested_commands)}?")
 
 
 if __name__ == "__main__":
