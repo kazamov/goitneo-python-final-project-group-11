@@ -70,19 +70,6 @@ class Command(ABC):
     def execute(self, assistant: Assistant, args):
         pass
 
-    @staticmethod
-    def print_command_list():
-        formatter = RichFormatter()
-        table = Table(title="Available Commands")
-        table.add_column("Command", style="bold")
-        table.add_column("Description")
-        
-        for command in COMMANDS:
-            table.add_row(command.name, Text(command.description))
-            table.add_row(Padding("", (0, 1)))
-
-        formatter.format_and_print(table)
-
 
 class AddContactCommand(Command):
     def __init__(self):
@@ -283,7 +270,7 @@ class ShowBirthdaysCommand(Command):
         super().__init__(
             "show-birthdays",
             "Show all birthdays per the next specified number of days."
-            +"\nFormat: show-birthdays --days <days> (default 7)",
+            + "\nFormat: show-birthdays --days <days> (default 7)",
         )
         self.parser = ArgumentParser()
         self.parser.add_argument("-d", "--days", type=int, required=False, default=7)
@@ -549,17 +536,49 @@ class HelpCommand(Command):
             "Show all available commands or a single command info.\nFormat: help [command]",
         )
 
-    def execute(self, _, args):
-        if len(args) > 0:
-            command_name = args[0]
+
+
+    def execute(self, assistant: Assistant, args):
+        if args:
+            command_name = args[0].lower()
             command = get_command(command_name)
             if command:
                 return str(command)
+            else:
+                suggested_commands = get_suggested_commands(command_name)
+                if suggested_commands:
+                    return f"Command '{command_name}' not found. Did you mean: {', '.join(suggested_commands)}?"
+                else:
+                    return f"Command '{command_name}' not found."
+        else:
+            formatter = RichFormatter()
+            table = Table(title="Available Commands")
+            table.add_column("Command", style="bold")
+            table.add_column("Description")
 
-            return f"Command '{command_name}' is not found."
+            for command in COMMANDS:
+                table.add_row(command.name, Text(command.description))
+                table.add_row(Padding("", (0, 1)))
+            formatter.format_and_print(table)
 
-        self.print_command_list()
+
+
+
+
+
+
+    # def print_command_list():
+    #     formatter = RichFormatter()
+    #     table = Table(title="Available Commands")
+    #     table.add_column("Command", style="bold")
+    #     table.add_column("Description")
+
+    #     for command in COMMANDS:
+    #         table.add_row(command.name, Text(command.description))
+    #         table.add_row(Padding("", (0, 1)))
+    #     formatter.format_and_print(table)
         return ""
+
 
 COMMANDS: list[Command] = [
     AddContactCommand(),

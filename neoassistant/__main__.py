@@ -21,7 +21,8 @@ def main():
         command_object = get_command(command_name)
 
         if command_object:
-            print(f"\n{command_object.execute(neoassistant, args)}\n")
+            result = command_object.execute(neoassistant, args)
+            formatter.format_and_print(f"\n{result}", style="green")
 
             if command_object.is_final:
                 neoassistant.save(NEOASSISTANT_DATA_FILENAME)
