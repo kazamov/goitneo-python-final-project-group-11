@@ -35,9 +35,7 @@ class Contact:
             )
 
         if self.email:
-            result += (
-                f"{formatter.format_field_value_pair('Address', str(self.email))}\n"
-            )
+            result += f"{formatter.format_field_value_pair('Email', str(self.email))}\n"
 
         return result
 
