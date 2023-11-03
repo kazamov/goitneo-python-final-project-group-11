@@ -1,24 +1,28 @@
 from .assistant import Neoassistant
 from .commands import get_command, get_suggested_commands, parse_input
+from .rich_formatter import RichFormatter
 
 
 NEOASSISTANT_DATA_FILENAME = "neoassistant-data.bin"
 
 
 def main():
+    formatter = RichFormatter()
+
     neoassistant = Neoassistant()
     neoassistant.load(NEOASSISTANT_DATA_FILENAME)
 
-    print("Welcome to the neoassistant bot!")
+    formatter.print("Welcome to the neoassistant bot!", style="orange1")
     while True:
         try:
-            user_input = input("Enter a command: ")
+            user_input = formatter.input("[grey70]\nEnter the command\n>>> [/grey70] ")
             command_name, *args = parse_input(user_input)
 
             command_object = get_command(command_name)
 
             if command_object:
-                print(f"\n{command_object.execute(neoassistant, args)}\n")
+                result = command_object.execute(neoassistant, args)
+                formatter.print(f"\n{result}")
 
                 if command_object.is_final:
                     neoassistant.save(NEOASSISTANT_DATA_FILENAME)
@@ -27,11 +31,12 @@ def main():
                 suggested_commands = get_suggested_commands(command_name)
 
                 if len(suggested_commands) == 0:
-                    print("Unknown command.")
+                    formatter.print("Unknown command.", style="red")
                 else:
-                    print(f"Did you mean: {', '.join(suggested_commands)}?")
+                    formatter.print(f"\nDid you mean: {', '.join(suggested_commands)}?")
+
         except KeyboardInterrupt:
-            print("\nGood bye!")
+            formatter.print("\nGood bye!")
             neoassistant.save(NEOASSISTANT_DATA_FILENAME)
             break
 

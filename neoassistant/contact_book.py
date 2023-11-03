@@ -1,7 +1,11 @@
 from collections import UserDict, defaultdict
 from datetime import datetime
 
+from .rich_formatter import RichFormatter
 from .fields import Name, Phone, Birthday, Email, Address
+
+
+formatter = RichFormatter()
 
 
 class Contact:
@@ -15,19 +19,25 @@ class Contact:
         self.email: Email = None
 
     def __str__(self):
-        result = f"Name: {self.name.value}\n"
+        result = f"{formatter.format_field_value_pair('Name', self.name.value)}\n"
 
         if len(self.phones) > 0:
-            result += f"Phones: {', '.join(p.value for p in self.phones)}\n"
+            result += f"{formatter.format_field_value_pair('Phones', ', '.join(p.value for p in self.phones))}\n"
 
         if self.birthday:
-            result += f"Birthday: {str(self.birthday)}\n"
+            result += (
+                f"{formatter.format_field_value_pair('Birthday', str(self.birthday))}\n"
+            )
 
         if self.address:
-            result += f"Address: {str(self.address)}\n"
+            result += (
+                f"{formatter.format_field_value_pair('Address', str(self.address))}\n"
+            )
 
         if self.email:
-            result += f"Email: {self.email.value}\n"
+            result += (
+                f"{formatter.format_field_value_pair('Address', str(self.email))}\n"
+            )
 
         return result
 
@@ -76,10 +86,11 @@ class ContactBook(UserDict):
 
         for record in user_records:
             name = record.name.value
-            birthday = record.birthday.value
 
-            if not birthday:
+            if not record.birthday:
                 continue
+
+            birthday = record.birthday.value
 
             birthday_this_year = birthday.replace(year=current_date.year)
 

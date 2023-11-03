@@ -1,5 +1,10 @@
 from collections import UserDict
 
+from .rich_formatter import RichFormatter
+
+
+formatter = RichFormatter()
+
 
 class Note:
     def __init__(self, title: str, content: str, tags: list[str]):
@@ -8,11 +13,15 @@ class Note:
         self.tags = tags
 
     def __str__(self):
-        result = f"Title: {self.title}\n"
+        result = f"{formatter.format_field_value_pair('Title', self.title)}\n"
+
         if len(self.content) > 0:
-            result += f"Content: {self.content}\n"
+            result += f"{formatter.format_field_value_pair('Content', self.content)}\n"
+
         if len(self.tags) > 0:
-            result += f"Tags: {', '.join(self.tags)}\n"
+            result += (
+                f"{formatter.format_field_value_pair('Tags', ', '.join(self.tags))}\n"
+            )
         return result
 
 
