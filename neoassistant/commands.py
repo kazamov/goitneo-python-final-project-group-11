@@ -1,9 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from shlex import split
-from rich.table import Table
-from rich.text import Text
-from rich.padding import Padding
 
 from .note_book import Note
 from .assistant import Assistant
@@ -45,9 +42,9 @@ def input_error(func):
             return func(self, address_book, args)
 
         except InvalidCommandError as e:
-            return e.message
+            return f"[red]{e.message}[/red]"
         except InvalidValueFieldError as e:
-            return e.message
+            return f"[red]{e.message}[/red]"
 
     return inner
 
@@ -536,8 +533,6 @@ class HelpCommand(Command):
             "Show all available commands or a single command info.\nFormat: help [command]",
         )
 
-
-
     def execute(self, assistant: Assistant, args):
         if args:
             command_name = args[0].lower()
@@ -552,14 +547,8 @@ class HelpCommand(Command):
                     return f"Command '{command_name}' not found."
         else:
             formatter = RichFormatter()
-            table = Table(title="Available Commands")
-            table.add_column("Command", style="bold")
-            table.add_column("Description")
+            formatter.format_command_list(COMMANDS)
 
-            for command in COMMANDS:
-                table.add_row(command.name, Text(command.description))
-                table.add_row(Padding("", (0, 1)))
-            formatter.format_and_print(table)
         return ""
 
 
@@ -599,6 +588,6 @@ def get_command(command_name: str):
 def get_suggested_commands(command_name: str):
     suggested_commands = []
     for valid_command in VALID_COMMANDS:
-        if levenshtein_distance(command_name, valid_command) <= 2:
+        if levenshtein_distance(command_name, valid_command) <= 3:
             suggested_commands.append(valid_command)
     return suggested_commands
