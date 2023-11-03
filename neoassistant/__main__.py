@@ -15,25 +15,30 @@ def main():
         "Welcome to the neoassistant bot!",
         style="orange1")
     while True:
-        user_input = input("Enter a command: ")
-        command_name, *args = parse_input(user_input)
+        try:
+            user_input = input("Enter a command: ")
+            command_name, *args = parse_input(user_input)
 
-        command_object = get_command(command_name)
+            command_object = get_command(command_name)
 
-        if command_object:
+            if command_object:
             result = command_object.execute(neoassistant, args)
             formatter.format_and_print(f"\n{result}", style="green")
 
-            if command_object.is_final:
-                neoassistant.save(NEOASSISTANT_DATA_FILENAME)
-                break
-        else:
-            suggested_commands = get_suggested_commands(command_name)
-
-            if len(suggested_commands) == 0:
-                formatter.format_and_print("Unknown command.", style="red")
+                if command_object.is_final:
+                    neoassistant.save(NEOASSISTANT_DATA_FILENAME)
+                    break
             else:
-                print(f"Did you mean: {', '.join(suggested_commands)}?")
+                suggested_commands = get_suggested_commands(command_name)
+
+                if len(suggested_commands) == 0:
+                    formatter.format_and_print("Unknown command.", style="red")
+                else:
+                    print(f"Did you mean: {', '.join(suggested_commands)}?")
+        except KeyboardInterrupt:
+            print("\nGood bye!")
+            neoassistant.save(NEOASSISTANT_DATA_FILENAME)
+            break
 
 
 if __name__ == "__main__":
