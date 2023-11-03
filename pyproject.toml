@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neoassistant"
-version = "0.1.0"
+version = "0.1.1"
 description = "A CLI application that helps to manage contacts and notes."
 readme = "README.md"
 authors = [
