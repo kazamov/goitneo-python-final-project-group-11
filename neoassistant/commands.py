@@ -560,23 +560,6 @@ class HelpCommand(Command):
                 table.add_row(command.name, Text(command.description))
                 table.add_row(Padding("", (0, 1)))
             formatter.format_and_print(table)
-
-
-
-
-
-
-
-    # def print_command_list():
-    #     formatter = RichFormatter()
-    #     table = Table(title="Available Commands")
-    #     table.add_column("Command", style="bold")
-    #     table.add_column("Description")
-
-    #     for command in COMMANDS:
-    #         table.add_row(command.name, Text(command.description))
-    #         table.add_row(Padding("", (0, 1)))
-    #     formatter.format_and_print(table)
         return ""
 
 
