@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentError
 from shlex import split
+
+from .argument_parser import AssistantArgumentParser
 
 from .note_book import Note
 from .assistant import Assistant
@@ -49,6 +51,19 @@ def input_error(func):
     return inner
 
 
+def parse_arguments(func):
+    """Decorator to parse command arguments"""
+
+    def inner(self, address_book: ContactBook, args):
+        try:
+            args = vars(self.parser.parse_args(args))
+            return func(self, address_book, args)
+        except ArgumentError as exc:
+            raise InvalidCommandError(self.name, exc.message) from exc
+
+    return inner
+
+
 class Command(ABC):
     """Abstract class for commands"""
 
@@ -59,12 +74,16 @@ class Command(ABC):
         self.description = description
         self.alias = alias
         self.is_final = is_final
+        self.parser = AssistantArgumentParser(name, description)
 
     def __str__(self):
-        return f"{self.name} - {self.description}"
+        return self.parser.get_help_message()
+
+    def get_short_description(self):
+        return self.parser.get_short_description()
 
     @abstractmethod
-    def execute(self, assistant: Assistant, args):
+    def execute(self, assistant: Assistant, args: dict):
         pass
 
 
@@ -72,9 +91,8 @@ class AddContactCommand(Command):
     def __init__(self):
         super().__init__(
             "add",
-            "Add a new contact.\nFormat: add --name <name> --phones [phone] --birthday [birthday] --address [address] --email [email]",
+            "Add a new contact.",
         )
-        self.parser = ArgumentParser()
         self.parser.add_argument("-n", "--name", type=str, required=True)
         self.parser.add_argument(
             "-p",
@@ -96,17 +114,13 @@ class AddContactCommand(Command):
         )
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        name = parsed_args.get("name")
-        phones = parsed_args.get("phones")
-        birthday = parsed_args.get("birthday")
-        address = parsed_args.get("address")
-        email = parsed_args.get("email")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        name = args.get("name")
+        phones = args.get("phones")
+        birthday = args.get("birthday")
+        address = args.get("address")
+        email = args.get("email")
 
         contact = assistant.contact_book.find(name)
         if contact:
@@ -136,9 +150,9 @@ class ChangeContactCommand(Command):
     def __init__(self):
         super().__init__(
             "change",
-            "Change a contact.\nFormat: change --current-name <current-name> --name [name] --phones [phone] --birthday [birthday] --address [address] --email [email]",
+            "Change a contact.",
         )
-        self.parser = ArgumentParser()
+        self.parser = AssistantArgumentParser("add", "Add a new contact.")
         self.parser.add_argument("-cn", "--current-name", type=str, required=True)
         self.parser.add_argument("-n", "--name", type=str, required=False)
         self.parser.add_argument(
@@ -161,18 +175,14 @@ class ChangeContactCommand(Command):
         )
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        current_name = parsed_args.get("current_name")
-        name = parsed_args.get("name")
-        phones = parsed_args.get("phones")
-        birthday = parsed_args.get("birthday")
-        address = parsed_args.get("address")
-        email = parsed_args.get("email")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        current_name = args.get("current_name")
+        name = args.get("name")
+        phones = args.get("phones")
+        birthday = args.get("birthday")
+        address = args.get("address")
+        email = args.get("email")
 
         contact = assistant.contact_book.find(current_name)
 
@@ -205,19 +215,15 @@ class DeleteContactCommand(Command):
     def __init__(self):
         super().__init__(
             "delete",
-            "Delete a contact.\nFormat: delete --name <name>",
+            "Delete a contact.",
         )
-        self.parser = ArgumentParser()
+
         self.parser.add_argument("-n", "--name", type=str, required=True)
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        name = parsed_args.get("name")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        name = args.get("name")
 
         contact = assistant.contact_book.find(name)
 
@@ -232,19 +238,15 @@ class ShowContactCommand(Command):
     def __init__(self):
         super().__init__(
             "show",
-            "Show contact information.\nFormat: show --name <name>",
+            "Show contact information.",
         )
-        self.parser = ArgumentParser()
+
         self.parser.add_argument("-n", "--name", type=str, required=True)
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        name = parsed_args.get("name")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        name = args.get("name")
 
         contact = assistant.contact_book.find(name)
 
@@ -266,20 +268,15 @@ class ShowBirthdaysCommand(Command):
     def __init__(self):
         super().__init__(
             "show-birthdays",
-            "Show all birthdays per the next specified number of days."
-            + "\nFormat: show-birthdays --days <days> (default 7)",
+            "Show all birthdays per the next specified number of days.",
         )
-        self.parser = ArgumentParser()
+
         self.parser.add_argument("-d", "--days", type=int, required=False, default=7)
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        days_delta = parsed_args.get("days")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        days_delta = args.get("days")
 
         if days_delta < 2:
             raise InvalidCommandError(self.name, "The minimum value for 'days' is 2.")
@@ -294,19 +291,15 @@ class FilterContactsCommand(Command):
     def __init__(self):
         super().__init__(
             "filter",
-            "Filter contacts by search criteria.\nFormat: filter --criteria <search_criteria>",
+            "Filter contacts by search criteria.",
         )
-        self.parser = ArgumentParser()
+
         self.parser.add_argument("-cr", "--criteria", type=str, required=True)
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        criteria = parsed_args.get("criteria")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        criteria = args.get("criteria")
 
         if len(criteria) < 2:
             raise InvalidCommandError(
@@ -324,9 +317,9 @@ class AddNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "add-note",
-            "Add a new note.\nFormat: add-note --title <title> --content <content> --tags [tags]",
+            "Add a new note.",
         )
-        self.parser = ArgumentParser()
+
         self.parser.add_argument("-t", "--title", type=str, required=True)
         self.parser.add_argument(
             "-c", "--content", type=str, required=False, default=""
@@ -336,15 +329,11 @@ class AddNoteCommand(Command):
         )
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        title = parsed_args.get("title")
-        content = parsed_args.get("content")
-        tags = parsed_args.get("tags")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        title = args.get("title")
+        content = args.get("content")
+        tags = args.get("tags")
 
         note = assistant.note_book.find_by_title(title)
         if note:
@@ -360,9 +349,9 @@ class ChangeNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "change-note",
-            "Change a note.\nFormat: change-note --current-title <title> --title [new_title] --content [new_content] --tags [tags]",
+            "Change a note.",
         )
-        self.parser = ArgumentParser()
+
         self.parser.add_argument("-ct", "--current-title", type=str, required=True)
         self.parser.add_argument(
             "-t", "--title", type=str, required=False, default=None
@@ -375,16 +364,12 @@ class ChangeNoteCommand(Command):
         )
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        current_title = parsed_args.get("current_title")
-        title = parsed_args.get("title")
-        content = parsed_args.get("content")
-        tags = parsed_args.get("tags")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        current_title = args.get("current_title")
+        title = args.get("title")
+        content = args.get("content")
+        tags = args.get("tags")
 
         note = assistant.note_book.find_by_title(current_title)
         if not note:
@@ -399,19 +384,15 @@ class DeleteNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "delete-note",
-            "Delete a note.\nFormat: delete-note --title <title>",
+            "Delete a note.",
         )
-        self.parser = ArgumentParser()
+
         self.parser.add_argument("-t", "--title", type=str, required=True)
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        title = parsed_args.get("title")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        title = args.get("title")
 
         note = assistant.note_book.find_by_title(title)
 
@@ -427,21 +408,17 @@ class ShowNoteCommand(Command):
     def __init__(self):
         super().__init__(
             "show-note",
-            "Show a note.\nFormat: show-note --title <title>",
+            "Show a note.",
         )
-        self.parser = ArgumentParser(exit_on_error=True)
+
         self.parser.add_argument(
             "-t", "--title", type=str, required=True, help="Note title"
         )
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        title = parsed_args.get("title")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        title = args.get("title")
 
         note = assistant.note_book.find_by_title(title)
         if not note:
@@ -465,19 +442,15 @@ class FilterNotesCommand(Command):
     def __init__(self):
         super().__init__(
             "filter-notes",
-            "Filter notes by criteria.\nFormat: filter-notes --criteria <criteria>",
+            "Filter notes by criteria.",
         )
-        self.parser = ArgumentParser()
+
         self.parser.add_argument("-cr", "--criteria", type=str, required=True)
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        criteria = parsed_args.get("criteria")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        criteria = args.get("criteria")
 
         if len(criteria) < 2:
             raise InvalidCommandError(
@@ -495,21 +468,17 @@ class FilterNotesByTagsCommand(Command):
     def __init__(self):
         super().__init__(
             "filter-notes-by-tags",
-            "Filter notes by tags.\nFormat: filter-notes-by-tags --tags [tags]",
+            "Filter notes by tags.",
         )
-        self.parser = ArgumentParser()
+
         self.parser.add_argument(
             "--tags", action="extend", nargs="+", type=str, required=True
         )
 
     @input_error
-    def execute(self, assistant: Assistant, args):
-        try:
-            parsed_args = vars(self.parser.parse_args(args))
-        except SystemExit as exc:
-            raise InvalidCommandError(self.name, "Invalid arguments") from exc
-
-        tags = parsed_args.get("tags")
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        tags = args.get("tags")
 
         notes = assistant.note_book.search_by_tags(tags)
         if len(notes) == 0:
@@ -530,12 +499,16 @@ class HelpCommand(Command):
     def __init__(self):
         super().__init__(
             "help",
-            "Show all available commands or a single command info.\nFormat: help [command]",
+            "Show all available commands or a single command info.",
         )
 
-    def execute(self, assistant: Assistant, args):
-        if args:
-            command_name = args[0].lower()
+        self.parser.add_argument("-c", "--command", type=str, required=False)
+
+    @input_error
+    @parse_arguments
+    def execute(self, assistant: Assistant, args: dict):
+        if args.get("command") is not None:
+            command_name = args.get("command")
             command = get_command(command_name)
             if command:
                 return str(command)

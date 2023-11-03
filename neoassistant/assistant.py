@@ -42,14 +42,14 @@ class Neoassistant(Assistant):
         return self.__note_book
 
     def save(self, filename):
-        cache_folder_path = Path.joinpath(Path.cwd(), "cache")
+        cache_folder_path = Path.joinpath(Path.cwd(), ".neoassistant-data")
         cache_folder_path.mkdir(exist_ok=True)
         file_path = Path.joinpath(cache_folder_path, filename)
         with open(file_path, "wb") as file:
             dump(self, file)
 
     def load(self, filename):
-        path = Path.joinpath(Path.cwd(), "cache", filename)
+        path = Path.joinpath(Path.cwd(), ".neoassistant-data", filename)
         if path.exists():
             with open(path, "rb") as file:
                 content = load(file)

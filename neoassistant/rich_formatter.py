@@ -27,7 +27,7 @@ class RichFormatter:
         table.add_column("Description")
 
         for command in commands:
-            table.add_row(command.name, Text(command.description))
+            table.add_row(command.name, Text(command.get_short_description()))
             table.add_row(Padding("", (0, 1)))
 
         self.print(table)

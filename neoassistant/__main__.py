@@ -36,7 +36,7 @@ def main():
                     formatter.print(f"\nDid you mean: {', '.join(suggested_commands)}?")
 
         except KeyboardInterrupt:
-            formatter.print("\nGood bye!")
+            formatter.print("\n\nGood bye!")
             neoassistant.save(NEOASSISTANT_DATA_FILENAME)
             break
 
