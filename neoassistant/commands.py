@@ -152,7 +152,7 @@ class ChangeContactCommand(Command):
             "change",
             "Change a contact.",
         )
-        self.parser = AssistantArgumentParser("add", "Add a new contact.")
+        self.parser = AssistantArgumentParser("change", "Change a contact.")
         self.parser.add_argument("-cn", "--current-name", type=str, required=True)
         self.parser.add_argument("-n", "--name", type=str, required=False)
         self.parser.add_argument(

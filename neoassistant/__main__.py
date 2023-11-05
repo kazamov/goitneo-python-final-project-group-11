@@ -40,6 +40,9 @@ def main():
             neoassistant.save(NEOASSISTANT_DATA_FILENAME)
             break
 
+        except:
+            formatter.print("[red]Unknown command.[/red]")
+
 
 if __name__ == "__main__":
     main()
