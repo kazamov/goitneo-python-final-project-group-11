@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from argparse import ArgumentParser, ArgumentError
+from argparse import ArgumentError
 from shlex import split
 
 from .argument_parser import AssistantArgumentParser
